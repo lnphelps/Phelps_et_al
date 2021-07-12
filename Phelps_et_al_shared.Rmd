@@ -1,0 +1,1055 @@
+
+
+```{r}
+
+#import environmental variables as dataframes (tropics, continental Africa, Madagascar)
+#CV_all_mada
+#CV_all_africa
+#CV_all_global
+
+#REMOVE 0s (no-fire): mada, africa, global, tropics; set tropics limits
+CV_all_mada_sum0 <- CV_all_mada[CV_all_mada$mean_yrly_FN > 0 & CV_all_mada$mean_yrly_BA > 0,] 
+CV_all_africa_sum0 <- CV_all_africa[CV_all_africa$mean_yrly_FN > 0 & CV_all_africa$mean_yrly_BA > 0,] 
+CV_all_global_sum0 <- CV_all_global[CV_all_global$mean_yrly_FN > 0 & CV_all_global$mean_yrly_BA > 0,] 
+CV_all_tropics = CV_all_global[CV_all_global$y >= -30 & CV_all_global$y <= 30,]
+CV_all_tropics_sum0 = CV_all_global_sum0[CV_all_global_sum0$y >= -30 & CV_all_global_sum0$y <= 30,]
+#
+CV_all_tropics_noburn = CV_all_tropics[ CV_all_tropics$mean_yrly_FN == 0 & CV_all_tropics$mean_yrly_BA == 0, ]
+CV_all_africa_noburn = CV_all_africa[ CV_all_africa$mean_yrly_FN == 0 & CV_all_africa$mean_yrly_BA == 0, ]
+CV_all_mada_noburn = CV_all_mada[ CV_all_mada$mean_yrly_FN == 0 & CV_all_mada$mean_yrly_BA == 0, ]
+#######################################################################
+
+#separate by cluster
+#####################
+#MAKE FIRE CLUSTERS
+fire_clusters_mada_sum0<-CV_all_mada_sum0[,c(1:14)]
+all_clusters_mada_sum0<-CV_all_mada_sum0
+#
+fire_clusters_africa_sum0<-CV_all_africa_sum0[,c(1:14)]
+all_clusters_africa_sum0<-CV_all_africa_sum0
+#
+fire_clusters_tropics_sum0<-CV_all_tropics_sum0[,c(1:14)]
+all_clusters_tropics_sum0<-CV_all_tropics_sum0
+#
+all_clusters_mada = CV_all_mada
+all_clusters_africa = CV_all_africa
+all_clusters_tropics = CV_all_tropics
+all_clusters_mada_noburn = CV_all_mada_noburn
+all_clusters_africa_noburn = CV_all_africa_noburn
+all_clusters_tropics_noburn = CV_all_tropics_noburn
+###########################################################################
+#log-transform & rescale all variables
+#
+#INDIVIDUAL CLUSTERS log-transform + add absolute minimum to each variable
+#fire
+min_abs=vector()
+for(i in 3:NCOL(fire_clusters_mada_sum0)){
+                min_abs[i] <- abs(min(fire_clusters_tropics_sum0[,i])) 
+                fire_clusters_mada_sum0[,i]<-log10(fire_clusters_mada_sum0[,i]+min_abs[i]+1)
+                fire_clusters_africa_sum0[,i]<-log10(fire_clusters_africa_sum0[,i]+min_abs[i]+1)
+                fire_clusters_tropics_sum0[,i]<-log10(fire_clusters_tropics_sum0[,i]+min_abs[i]+1)}
+#whole dataset
+min_abs=vector()
+for(i in c(3:22,24:32,35)){
+                min_abs[i] <- abs(min(all_clusters_tropics[,i]))
+                all_clusters_mada_sum0[,i]<-log10(all_clusters_mada_sum0[,i]+min_abs[i]+1)
+                all_clusters_africa_sum0[,i]<-log10(all_clusters_africa_sum0[,i]+min_abs[i]+1)
+                all_clusters_tropics_sum0[,i]<-log10(all_clusters_tropics_sum0[,i]+min_abs[i]+1)
+                #
+                all_clusters_mada[,i]<-log10(all_clusters_mada[,i]+min_abs[i]+1)
+                all_clusters_africa[,i]<-log10(all_clusters_africa[,i]+min_abs[i]+1)
+                all_clusters_tropics[,i]<-log10(all_clusters_tropics[,i]+min_abs[i]+1)
+                #
+                all_clusters_mada_noburn[,i]<-log10(all_clusters_mada_noburn[,i]+min_abs[i]+1)
+                all_clusters_africa_noburn[,i]<-log10(all_clusters_africa_noburn[,i]+min_abs[i]+1)
+                all_clusters_tropics_noburn[,i]<-log10(all_clusters_tropics_noburn[,i]+min_abs[i]+1)}
+###########################################################################################
+#calculate transformed max across tropics for rescaling
+maxy_fire = vector()
+maxy_NDVI = vector()
+maxy_allveg_NDVI = vector()
+maxy_all = vector()
+maxy_clim_all_WC = vector()
+maxy_clim_all_CH = vector()
+for(i in 1:NCOL(fire_clusters_tropics_sum0)){maxy_fire[i] = max(fire_clusters_tropics_sum0[,i])}
+for(i in 1:NCOL(all_clusters_tropics)){maxy_all[i] = max(all_clusters_tropics[,i])}
+####################################################################################################
+#RESCALE
+for(i in 3:NCOL(fire_clusters_mada_sum0)){
+          fire_clusters_mada_sum0[,i]<-fire_clusters_mada_sum0[,i]/maxy_fire[i]
+          fire_clusters_africa_sum0[,i]<-fire_clusters_africa_sum0[,i]/maxy_fire[i]
+          fire_clusters_tropics_sum0[,i]<-fire_clusters_tropics_sum0[,i]/maxy_fire[i]}
+for(i in c(3:22,24:32,35)){
+          all_clusters_mada[,i]<-all_clusters_mada[,i]/maxy_all[i]
+          all_clusters_africa[,i]<-all_clusters_africa[,i]/maxy_all[i]
+          all_clusters_tropics[,i]<-all_clusters_tropics[,i]/maxy_all[i]         
+          #
+          all_clusters_mada_sum0[,i]<-all_clusters_mada_sum0[,i]/maxy_all[i]
+          all_clusters_africa_sum0[,i]<-all_clusters_africa_sum0[,i]/maxy_all[i]
+          all_clusters_tropics_sum0[,i]<-all_clusters_tropics_sum0[,i]/maxy_all[i]
+          #
+          all_clusters_mada_noburn[,i]<-all_clusters_mada_noburn[,i]/maxy_all[i]
+          all_clusters_africa_noburn[,i]<-all_clusters_africa_noburn[,i]/maxy_all[i]
+          all_clusters_tropics_noburn[,i]<-all_clusters_tropics_noburn[,i]/maxy_all[i]}
+######################################################
+#PLOT RASTER TEST
+mess.object_raster <- rasterFromXYZ( fire_clusters_tropics_sum0[,c("x","y","cv_yrly_BA")] )
+plot(mess.object_raster)
+######################################################
+
+```
+
+
+```{r}
+#CLUSTERING FIRE REGIMES
+##############################################################
+#calculate distance matrix for fire data
+distance_mada_fire <- dist(fire_clusters_mada_sum0[,c(3:14)],method="euclidean",diag=FALSE) 
+cor.clust_mada_fire <- hclust(distance_mada_fire/max(distance_mada_fire),method="complete")
+plot(cor.clust_mada_fire, main = "Fire cluster dendrogram", xlab="distance (rescaled)")
+abline(h=0.5, lty=2, col="red", lwd=2) #(3:6) 5 clusters, 7
+
+########################################################
+#clusters prectemp
+fire_clusters_mada_5<-hclust(distance_mada_fire,method = "complete")
+fire_clusters_mada_5<-cutree(fire_clusters_mada_5,k=5)
+all_clusters_mada_sum0$fire_cluster_5 <- fire_clusters_mada_5
+all_clusters_mada_sum0$fire_colors_5 <- "testy"
+#
+#COLORS: define
+cols<-(c("blue","forestgreen","yellow3","orange","firebrick"))
+clustnum<-c(1:5)
+index<-data.frame(cols,clustnum)
+all_clusters_mada_sum0$fire_colors_5<-index$cols[ match(all_clusters_mada_sum0$fire_cluster_5,index$clustnum)]
+all_clusters_mada_noburn$fire_cluster_5 = 6 
+all_clusters_mada_noburn$fire_colors_5 = "white"
+all_clusters_mada2 <- merge(all_clusters_mada_sum0,all_clusters_mada_noburn,all=TRUE)
+########################################################################
+
+#Clusters: fire, NDVI, climate
+fire_clust_1<-all_clusters_mada_sum0[all_clusters_mada_sum0$fire_cluster_5 == 1,]
+fire_clust_2<-all_clusters_mada_sum0[all_clusters_mada_sum0$fire_cluster_5 == 2,]
+fire_clust_3<-all_clusters_mada_sum0[all_clusters_mada_sum0$fire_cluster_5 == 3,]
+fire_clust_4<-all_clusters_mada_sum0[all_clusters_mada_sum0$fire_cluster_5 == 4,]
+fire_clust_5<-all_clusters_mada_sum0[all_clusters_mada_sum0$fire_cluster_5 == 5,]
+fire_clust_6<-all_clusters_mada_noburn[all_clusters_mada_noburn$fire_cluster_5 == 6,]
+```
+
+
+```{r}
+
+
+#MESS ANALYSIS
+library(ecospat)
+fire_clust_mada = list()
+NDVI_clust_mada = list()
+  fire_clust_mada[[1]]<-fire_clust_1
+  fire_clust_mada[[2]]<-fire_clust_2
+  fire_clust_mada[[3]]<-fire_clust_3
+  fire_clust_mada[[4]]<-fire_clust_4
+  fire_clust_mada[[5]]<-fire_clust_5
+  fire_clust_mada[[6]]<-fire_clust_6
+#####################################
+
+#CALCULATE MESS SURFACES
+mess.object=list()
+mess.object_raster=list()
+for(clust in 1:5){
+  mess.object[[clust]] <- ecospat.mess (all_clusters_tropics_sum0[,1:14],fire_clust_mada[[clust]][,1:14], w="default")
+  mess.object[[clust]] <- data.frame(mess.object[[clust]])
+  tryCatch(mess.object_raster[[clust]]<-rasterFromXYZ(mess.object[[clust]][,c("x","y","MESS")]))
+}
+fire_clust_rasters = mess.object_raster
+####################################################################
+#
+#
+#load raster for resampling of MESS surfaces according to original fire variabl grids
+#yrly_burned_area
+#
+#SELECT all similar
+messpos_pre=list()
+for(i in 1:6){ 
+  messpos_pre[[i]] <- fire_clust_rasters[[i]]
+  messpos_pre[[i]] <- resample(messpos_pre[[i]],yrly_burned_area)
+  messpos_pre[[i]] [messpos_pre[[i]] >= 0 ] <- 1 
+  messpos_pre[[i]] [messpos_pre[[i]] < 0 ] <- 0 }
+########################################################
+#SELECT all with > 24 MESS similarity
+messpos=list()
+for(i in 1:6){ 
+  messpos[[i]] <- fire_clust_rasters[[i]]
+  messpos[[i]] <- resample(messpos[[i]],yrly_burned_area)
+  messpos[[i]] [messpos[[i]] <= 24] <- 0  #20
+  messpos[[i]] [messpos[[i]] > 0 ] <- 1 }
+########################################################
+#
+#IF MAX VALUE == 1, THERE IS NO OVERLAP B/W PROJECTED FIRE REGIMES
+stacky=list()
+for(i in 1:5){stacky[[i]] = calc(stack(messpos[[1]],messpos[[i+1]]),fun=sum)}
+for(i in 1:5){plot(stacky[[i]])}
+stacky2=list()
+for(i in 1:4){stacky2[[i]] = calc(stack(messpos[[2]],messpos[[i+2]]),fun=sum)}
+for(i in 1:4){plot(stacky2[[i]])}
+stacky3=list()
+for(i in 1:3){stacky3[[i]] = calc(stack(messpos[[3]],messpos[[i+3]]),fun=sum)}
+for(i in 1:3){plot(stacky3[[i]])}
+stacky4 = calc(stack(messpos[[4]],messpos[[5]]),fun=sum)
+plot(stacky4)
+
+```
+
+
+
+```{r}
+#BURNED v. NOT BURNED
+
+#id burned v. not burned tropics by region
+CV_all_tropics_sum0$BAstatus<-"burned"
+CV_all_tropics_noburn$BAstatus<-"notburned"
+all_tropics<-unique(rbind(CV_all_tropics_sum0,CV_all_tropics_noburn))
+all_tropics<-unique(all_tropics[,c("x","y","BAstatus")])
+
+#designate regions
+madacoords<-CV_all_mada[,c("x","y")]
+madacoords$geostat<-"mada"
+africacoords<-CV_all_africa[,c("x","y")]
+africacoords$geostat<-"africa"
+madAfrica<-rbind(madacoords,africacoords)
+#merge 
+all_new = unique(merge(all_tropics,madAfrica,by.all=c("x","y"),all=TRUE))
+notin = all_new[is.na(all_new$BAstatus),]
+test_all<-unique(all_new[,c("x","y")])
+#########################################################
+
+all_new <- unique(all_new[!is.na(all_new$BAstatus),])
+all_new$geostat[is.na(all_new$geostat)]<-"tropics"
+all_new$BAstatusbinary <- all_new$BAstatus
+all_new$BAstatusbinary[all_new$BAstatusbinary=="notburned"]<-0
+all_new$BAstatusbinary[all_new$BAstatusbinary=="burned"]<-1
+##########################################################
+#
+#
+#load dataframe of joined data about year-to-year burned area, TRMM precip for trends
+#combined_new 
+#
+combined_byClust = list()
+combined_byClust[[1]] <- combined_new[ as.numeric(combined_new$mess.object.raster_1) == 1,] 
+combined_byClust[[2]] <- combined_new[ as.numeric(combined_new$mess.object.raster_2) == 1,] 
+combined_byClust[[3]] <- combined_new[ as.numeric(combined_new$mess.object.raster_3) == 1,] 
+combined_byClust[[4]] <- combined_new[ as.numeric(combined_new$mess.object.raster_4) == 1,] 
+combined_byClust[[5]] <- combined_new[ as.numeric(combined_new$mess.object.raster_5) == 1,] 
+combined_byClust[[6]] <- combined_new[ as.numeric(combined_new$noburn) == 1,] 
+for(i in 1:6){ combined_byClust[[i]] <- combined_byClust[[i]][!is.na(combined_byClust[[i]]$x),] }
+#
+combined_byPreClust = list()
+combined_byPreClust[[1]] <- combined_new[ as.numeric(combined_new$mess_pre_1) == 1,] 
+combined_byPreClust[[2]] <- combined_new[ as.numeric(combined_new$mess_pre_2) == 1,] 
+combined_byPreClust[[3]] <- combined_new[ as.numeric(combined_new$mess_pre_3) == 1,] 
+combined_byPreClust[[4]] <- combined_new[ as.numeric(combined_new$mess_pre_4) == 1,] 
+combined_byPreClust[[5]] <- combined_new[ as.numeric(combined_new$mess_pre_5) == 1,] 
+combined_byPreClust[[6]] <- combined_new[ as.numeric(combined_new$noburn) == 1,] 
+for(i in 1:6){ combined_byPreClust[[i]] <- combined_byPreClust[[i]][!is.na(combined_byPreClust[[i]]$x),] }
+#
+combinedClust_mada=list()
+combinedClust_africa=list()
+combinedClust_tropics=list()
+for(i in 1:6){combinedClust_mada[[i]]<-combined_byClust[[i]][  combined_byClust[[i]]$geostat =="mada", ]}
+for(i in 1:6){combinedClust_africa[[i]]<-combined_byClust[[i]][  combined_byClust[[i]]$geostat =="africa", ]}
+for(i in 1:6){combinedClust_tropics[[i]]<-combined_byClust[[i]][  combined_byClust[[i]]$geostat =="tropics", ]}
+#
+#^ use above in lm analyses (below)
+#
+#
+#DEFINE similar / dissimilar burned area
+#
+#DISSIMILAR TO MADAGASCAR's regimes
+outsidefire = combined_new[ combined_new$mean_yrly_BA > 0 & combined_new$mess_pre_1 == 0
+                            & combined_new$mess_pre_2 == 0 & combined_new$mess_pre_3 == 0
+                            & combined_new$mess_pre_4 == 0 & combined_new$mess_pre_5 == 0,]
+outsidefire$outside<-1
+outsidefire<-merge(outsidefire[,c("x","y","outside")],combined_new,by.all=c("x","y"),all=TRUE)
+outsidefire$outside[is.na(outsidefire$outside)]<-0
+outsidefire_pres = outsidefire[outsidefire$outside==1,]
+insidefire = outsidefire[outsidefire$outside==0,]
+#
+preClust_outsidefire<-rasterFromXYZ(outsidefire[,c("x","y","outside")])
+preClust_outsidefire2<-rasterFromXYZ(outsidefire_pres[,c("x","y","mean_yrly_BA")])
+preClust_insidefire<-rasterFromXYZ(insidefire[,c("x","y","mean_yrly_BA")])
+#
+preClust_outsidefire_size<-rasterFromXYZ(outsidefire[,c("x","y","mean_yrly_FS")])
+preClust_outsidefire2_size<-rasterFromXYZ(outsidefire_pres[,c("x","y","mean_yrly_FS")])
+preClust_insidefire_size<-rasterFromXYZ(insidefire[,c("x","y","mean_yrly_FS")])
+#
+preClust_outsidefire_number<-rasterFromXYZ(outsidefire[,c("x","y","mean_yrly_FN")])
+preClust_outsidefire2_number<-rasterFromXYZ(outsidefire_pres[,c("x","y","mean_yrly_FN")])
+preClust_insidefire_number<-rasterFromXYZ(insidefire[,c("x","y","mean_yrly_FN")])
+#
+#
+#DISSIMILAR TO MADAGASCAR's regimes
+outsidefire = combined_new[ combined_new$mean_yrly_BA > 0 & combined_new$mess_pre_1 == 0
+                            & combined_new$mess_pre_2 == 0 & combined_new$mess_pre_3 == 0
+                            & combined_new$mess_pre_4 == 0 & combined_new$mess_pre_5 == 0,]
+outsidefire$outside<-1
+outsidefire<-merge(outsidefire[,c("x","y","outside")],combined_new,by.all=c("x","y"),all=TRUE)
+outsidefire$outside[is.na(outsidefire$outside)]<-0
+outsidefire_pres = outsidefire[outsidefire$outside==1,]
+insidefire = outsidefire[outsidefire$outside==0,]
+#
+outsideAdd = preClust_outsidefire2
+outsideAdd[outsideAdd <= 0]<-NA
+insideAdd = preClust_insidefire
+insideAdd[insideAdd <= 0]<-NA
+#
+outsideAdd_size = preClust_outsidefire2_size
+outsideAdd_size[outsideAdd_size <= 0]<-NA
+insideAdd_size = preClust_insidefire_size
+insideAdd_size[insideAdd_size <= 0]<-NA
+#
+outsideAdd_df = data.frame(rasterToPoints(outsideAdd))
+outsideAdd_df<-outsideAdd_df[!is.na(outsideAdd_df$mean_yrly_BA),]
+outsideAdd_df<-outsideAdd_df[outsideAdd_df$mean_yrly_BA > 0,]
+#
+insideAdd_df = data.frame(rasterToPoints(insideAdd))
+insideAdd_df<-insideAdd_df[!is.na(insideAdd_df$mean_yrly_BA),]
+insideAdd_df<-insideAdd_df[insideAdd_df$mean_yrly_BA > 0,]
+#
+NROW(outsideAdd_df) / (NROW(outsideAdd_df)+NROW(insideAdd_df)) #dissimilar burned area
+NROW(insideAdd_df) / (NROW(outsideAdd_df)+NROW(insideAdd_df)) #similar burned area
+#
+#for plots... (Fig. 3, etc.)
+
+```
+
+
+
+
+```{r}
+#LM ANALYSIS BY FIRE REGIME AND REGION
+
+for(i in 1:6){combinedClust_mada[[i]]<-combinedClust_mada[[i]][ !is.na(combinedClust_mada[[i]]$x), ]
+combinedClust_africa[[i]]<-combinedClust_africa[[i]][ !is.na(combinedClust_africa[[i]]$x), ]
+combinedClust_tropics[[i]]<-combinedClust_tropics[[i]][ !is.na(combinedClust_tropics[[i]]$x), ]}
+#
+#burnd area time series collation for lm analysis
+BAseries=list() 
+for(i in 1:6){
+BAseries[[i]] = c( sum(combinedClust_mada[[i]]$yrly_BAmean03,na.rm = T),
+                   sum(combinedClust_mada[[i]]$yrly_BAmean04,na.rm = T),
+                   sum(combinedClust_mada[[i]]$yrly_BAmean05,na.rm = T),                              
+                   sum(combinedClust_mada[[i]]$yrly_BAmean06,na.rm = T),                  
+                   sum(combinedClust_mada[[i]]$yrly_BAmean07,na.rm = T),
+                   sum(combinedClust_mada[[i]]$yrly_BAmean08,na.rm = T),
+                   sum(combinedClust_mada[[i]]$yrly_BAmean09,na.rm = T),
+                   sum(combinedClust_mada[[i]]$yrly_BAmean10,na.rm = T),
+                   sum(combinedClust_mada[[i]]$yrly_BAmean11,na.rm = T),
+                   sum(combinedClust_mada[[i]]$yrly_BAmean12,na.rm = T),
+                   sum(combinedClust_mada[[i]]$yrly_BAmean13,na.rm = T),
+                   sum(combinedClust_mada[[i]]$yrly_BAmean14,na.rm = T),
+                   sum(combinedClust_mada[[i]]$yrly_BAmean15,na.rm = T),
+                   sum(combinedClust_mada[[i]]$yrly_BAmean16,na.rm = T),
+                   sum(combinedClust_mada[[i]]$yrly_BAmean17,na.rm = T),
+                   sum(combinedClust_mada[[i]]$yrly_BAmean18,na.rm = T),
+                   sum(combinedClust_mada[[i]]$yrly_BAmean19,na.rm = T))}
+#
+#
+BAseries_africa=list() 
+for(i in 1:6){
+BAseries_africa[[i]] = c( sum(combinedClust_africa[[i]]$yrly_BAmean03,na.rm = T),
+                   sum(combinedClust_africa[[i]]$yrly_BAmean04,na.rm = T),
+                   sum(combinedClust_africa[[i]]$yrly_BAmean05,na.rm = T),                            
+                   sum(combinedClust_africa[[i]]$yrly_BAmean06,na.rm = T),                  
+                   sum(combinedClust_africa[[i]]$yrly_BAmean07,na.rm = T),
+                   sum(combinedClust_africa[[i]]$yrly_BAmean08,na.rm = T),
+                   sum(combinedClust_africa[[i]]$yrly_BAmean09,na.rm = T),
+                   sum(combinedClust_africa[[i]]$yrly_BAmean10,na.rm = T),
+                   sum(combinedClust_africa[[i]]$yrly_BAmean11,na.rm = T),
+                   sum(combinedClust_africa[[i]]$yrly_BAmean12,na.rm = T),
+                   sum(combinedClust_africa[[i]]$yrly_BAmean13,na.rm = T),
+                   sum(combinedClust_africa[[i]]$yrly_BAmean14,na.rm = T),
+                   sum(combinedClust_africa[[i]]$yrly_BAmean15,na.rm = T),
+                   sum(combinedClust_africa[[i]]$yrly_BAmean16,na.rm = T),
+                   sum(combinedClust_africa[[i]]$yrly_BAmean17,na.rm = T),
+                   sum(combinedClust_africa[[i]]$yrly_BAmean18,na.rm = T),
+                   sum(combinedClust_africa[[i]]$yrly_BAmean19,na.rm = T))}
+#
+#
+BAseries_tropics=list() 
+for(i in 1:6){
+BAseries_tropics[[i]] = c( sum(combinedClust_tropics[[i]]$yrly_BAmean03,na.rm = T),
+                   sum(combinedClust_tropics[[i]]$yrly_BAmean04,na.rm = T),
+                   sum(combinedClust_tropics[[i]]$yrly_BAmean05,na.rm = T),                           
+                   sum(combinedClust_tropics[[i]]$yrly_BAmean06,na.rm = T),                  
+                   sum(combinedClust_tropics[[i]]$yrly_BAmean07,na.rm = T),
+                   sum(combinedClust_tropics[[i]]$yrly_BAmean08,na.rm = T),
+                   sum(combinedClust_tropics[[i]]$yrly_BAmean09,na.rm = T),
+                   sum(combinedClust_tropics[[i]]$yrly_BAmean10,na.rm = T),
+                   sum(combinedClust_tropics[[i]]$yrly_BAmean11,na.rm = T),
+                   sum(combinedClust_tropics[[i]]$yrly_BAmean12,na.rm = T),
+                   sum(combinedClust_tropics[[i]]$yrly_BAmean13,na.rm = T),
+                   sum(combinedClust_tropics[[i]]$yrly_BAmean14,na.rm = T),
+                   sum(combinedClust_tropics[[i]]$yrly_BAmean15,na.rm = T),
+                   sum(combinedClust_tropics[[i]]$yrly_BAmean16,na.rm = T),
+                   sum(combinedClust_tropics[[i]]$yrly_BAmean17,na.rm = T),
+                   sum(combinedClust_tropics[[i]]$yrly_BAmean18,na.rm = T),
+                   sum(combinedClust_tropics[[i]]$yrly_BAmean19,na.rm = T))}
+#
+#
+test=list()
+test[[1]]<-lm( as.numeric(BAseries[[1]]) ~ seq(2003,2019,by=1) )
+test[[2]]<-lm( as.numeric(BAseries[[2]]) ~ seq(2003,2019,by=1) )
+test[[3]]<-lm( as.numeric(BAseries[[3]]) ~ seq(2003,2019,by=1) )
+test[[4]]<-lm( as.numeric(BAseries[[4]]) ~ seq(2003,2019,by=1) )
+test[[5]]<-lm( as.numeric(BAseries[[5]]) ~ seq(2003,2019,by=1) )
+test[[6]]<-lm( as.numeric(BAseries[[6]]) ~ seq(2003,2019,by=1) )
+#
+test_africa=list()
+test_africa[[1]]<-lm( as.numeric(BAseries_africa[[1]]) ~ seq(2003,2019,by=1) )
+test_africa[[2]]<-lm( as.numeric(BAseries_africa[[2]]) ~ seq(2003,2019,by=1) )
+test_africa[[3]]<-lm( as.numeric(BAseries_africa[[3]]) ~ seq(2003,2019,by=1) )
+test_africa[[4]]<-lm( as.numeric(BAseries_africa[[4]]) ~ seq(2003,2019,by=1) )
+test_africa[[5]]<-lm( as.numeric(BAseries_africa[[5]]) ~ seq(2003,2019,by=1) )
+test_africa[[6]]<-lm( as.numeric(BAseries_africa[[6]]) ~ seq(2003,2019,by=1) )
+#
+test_tropics=list()
+test_tropics[[1]]<-lm( as.numeric(BAseries_tropics[[1]]) ~ seq(2003,2019,by=1) )
+test_tropics[[2]]<-lm( as.numeric(BAseries_tropics[[2]]) ~ seq(2003,2019,by=1) )
+test_tropics[[3]]<-lm( as.numeric(BAseries_tropics[[3]]) ~ seq(2003,2019,by=1) )
+test_tropics[[4]]<-lm( as.numeric(BAseries_tropics[[4]]) ~ seq(2003,2019,by=1) )
+test_tropics[[5]]<-lm( as.numeric(BAseries_tropics[[5]]) ~ seq(2003,2019,by=1) )
+test_tropics[[6]]<-lm( as.numeric(BAseries_tropics[[6]]) ~ seq(2003,2019,by=1) )
+#
+
+```
+
+
+
+```{r}
+#using all similar clusters (no MESS filters, not mutually exclusive) to give idea
+#
+#sum of pixels for each region
+clustsNROW_mada=vector()
+preclustsNROW_mada = vector()
+for(i in 1:5) {preclustsNROW_mada[i] = NROW(mada_fire_clusts2[[i]]) }
+for(i in 6) {preclustsNROW_mada[i] = NROW(mada_fire_clusts[[i]]) }  #use mada_fire_clusts
+#
+clustsNROW_africa=vector()
+preclustsNROW_africa = vector()
+for(i in 1:5) {preclustsNROW_africa[i] = NROW(africa_fire_clusts2[[i]]) }
+for(i in 6) {preclustsNROW_africa[i] = NROW(africa_fire_clusts[[i]]) }  #use africa_fire_clusts
+#
+clustsNROW_tropics=vector()
+preclustsNROW_tropics = vector()
+for(i in 1:5) {preclustsNROW_tropics[i] = NROW(tropics_fire_clusts2[[i]]) }
+for(i in 6) {preclustsNROW_tropics[i] = NROW(tropics_fire_clusts[[i]]) }  #use tropics_fire_clusts
+#
+#sum of pixels for each regime per region
+preclustsum_mada = sum(preclustsNROW_mada)
+preclustsum_africa = sum(preclustsNROW_africa)
+preclustsum_tropics = sum(preclustsNROW_tropics)
+#
+#FIGURE 4a (right): proportion of regional pixels dedicated to each fire regime (and no-fire landscapes)
+preclustsNROW_mada/preclustsum_mada
+preclustsNROW_africa/preclustsum_africa
+preclustsNROW_tropics/preclustsum_tropics
+```
+
+
+```{r}
+
+#OVERLAP (Fig. 4a, S4)
+
+#define PCAs for burned area
+pca.fire<-dudi.pca(fin2[,3:14],scannf=F,nf=2)
+pca.NDVI<-dudi.pca(fin2[,15:18],scannf=F,nf=2)
+pca.climWC<-dudi.pca(fin2[,24:27],scannf=F,nf=2)
+pca.climCH<-dudi.pca(fin2[,28:31],scannf=F,nf=2)
+#
+#define PCAs for non-burned area
+pca.noburn.NDVI<-dudi.pca(noburn_pca[,15:18],scannf=F,nf=2)
+pca.noburn.climWC<-dudi.pca(noburn_pca[,24:27],scannf=F,nf=2)
+pca.noburn.climCH<-dudi.pca(noburn_pca[,28:31],scannf=F,nf=2)
+#
+# Variance explained by axes
+pca.fire$eig[1]/sum(pca.fire$eig)
+pca.fire$eig[2]/sum(pca.fire$eig)
+#
+#define scores of mada & no-mada data
+scores.mada_fire=list()
+scores.tropics_fire=list()
+scores.africa_fire=list()
+scores.mada_NDVI=list()
+scores.tropics_NDVI=list()
+scores.africa_NDVI=list()
+scores.mada_climWC=list()
+scores.tropics_climWC=list()
+scores.africa_climWC=list()
+scores.mada_climCH=list()
+scores.tropics_climCH=list()
+scores.africa_climCH=list()
+#
+for(i in 1:5){scores.mada_fire[[i]] = suprow(pca.fire,mada_fire_clusts[[i]][,3:14])$li}
+for(i in 1:5){scores.tropics_fire[[i]] = suprow(pca.fire,tropics_fire_clusts[[i]][,3:14])$li}
+for(i in 1:5){scores.mada_NDVI[[i]] = suprow(pca.NDVI,mada_fire_clusts[[i]][,15:18])$li}
+for(i in 1:5){scores.tropics_NDVI[[i]] = suprow(pca.NDVI,tropics_fire_clusts[[i]][,15:18])$li}
+for(i in 1:5){scores.mada_climWC[[i]] = suprow(pca.climWC,mada_fire_clusts[[i]][,24:27])$li}
+for(i in 1:5){scores.tropics_climWC[[i]] = suprow(pca.climWC,tropics_fire_clusts[[i]][,24:27])$li}
+for(i in 1:5){scores.mada_climCH[[i]] = suprow(pca.climCH,mada_fire_clusts[[i]][,28:31])$li}
+for(i in 1:5){scores.tropics_climCH[[i]] = suprow(pca.climCH,tropics_fire_clusts[[i]][,28:31])$li}
+for(i in 1:5){scores.africa_fire[[i]] = suprow(pca.fire,africa_fire_clusts[[i]][,3:14])$li}
+for(i in 1:5){scores.africa_NDVI[[i]] = suprow(pca.NDVI,africa_fire_clusts[[i]][,15:18])$li}
+for(i in 1:5){scores.africa_climWC[[i]] = suprow(pca.climWC,africa_fire_clusts[[i]][,24:27])$li}
+for(i in 1:5){scores.africa_climCH[[i]] = suprow(pca.climCH,africa_fire_clusts[[i]][,28:31])$li}
+#
+scores.mada_noburnNDVI = suprow(pca.noburn.NDVI,mada_noburn[,15:18])$li
+scores.tropics_noburnNDVI = suprow(pca.noburn.NDVI,tropics_noburn[,15:18])$li
+scores.africa_noburnNDVI = suprow(pca.noburn.NDVI,africa_noburn[,15:18])$li
+scores.mada_noburnclimWC = suprow(pca.noburn.climWC,mada_noburn[,24:27])$li
+scores.tropics_noburnclimWC = suprow(pca.noburn.climWC,tropics_noburn[,24:27])$li
+scores.africa_noburnclimWC = suprow(pca.noburn.climWC,africa_noburn[,24:27])$li
+scores.mada_noburnclimCH = suprow(pca.noburn.climCH,mada_noburn[,28:31])$li
+scores.tropics_noburnclimCH = suprow(pca.noburn.climCH,tropics_noburn[,28:31])$li
+scores.africa_noburnclimCH = suprow(pca.noburn.climCH,africa_noburn[,28:31])$li
+#
+scores.fire <- pca.fire$li
+scores.NDVI <- pca.NDVI$li
+scores.climWC <- pca.climWC$li
+scores.climCH <- pca.climCH$li
+#
+scores.noburn.NDVI = pca.noburn.NDVI$li
+scores.noburn.climWC = pca.noburn.climWC$li
+scores.noburn.climCH = pca.noburn.climCH$li
+#
+#
+#
+#FIGURE 2 PCA + clusters w/ centroids
+par(mfrow=c(2,1))
+s.corcircle(pca.fire$co, clab = 1)
+#
+#make grids for subset cluster comparisons (FIg. 4, S4)
+grid.fire_mada=list()
+grid.fire_africa=list()
+grid.fire_tropics=list()
+grid.NDVI_mada=list()
+grid.NDVI_africa=list()
+grid.NDVI_tropics=list()
+grid.climWC_mada=list()
+grid.climWC_africa=list()
+grid.climWC_tropics=list()
+grid.climCH_mada=list()
+grid.climCH_africa=list()
+grid.climCH_tropics=list()
+#
+for(i in 1:5){
+grid.fire_mada[[i]] <- ecospat.grid.clim.dyn( glob = scores.fire, glob1 = scores.fire, 
+                                              sp= scores.mada_fire[[i]], R=100, th.sp=0 )
+grid.NDVI_mada[[i]] <- ecospat.grid.clim.dyn( glob = scores.NDVI, glob1 = scores.NDVI, 
+                                              sp= scores.mada_NDVI[[i]], R=100, th.sp=0 )
+grid.climWC_mada[[i]] <- ecospat.grid.clim.dyn( glob = scores.climWC, glob1 = scores.climWC,
+                                                sp= scores.mada_climWC[[i]], R=100, th.sp=0 )
+grid.climCH_mada[[i]] <- ecospat.grid.clim.dyn( glob = scores.climCH, glob1 = scores.climCH,
+                                                sp= scores.mada_climCH[[i]], R=100, th.sp=0 )}
+for(i in 1:5){
+grid.fire_africa[[i]] <- ecospat.grid.clim.dyn( glob = scores.fire, glob1 = scores.fire, 
+                                                sp= scores.africa_fire[[i]], R=100, th.sp=0 )
+grid.NDVI_africa[[i]] <- ecospat.grid.clim.dyn( glob = scores.NDVI, glob1 = scores.NDVI, 
+                                                sp= scores.africa_NDVI[[i]], R=100, th.sp=0 )
+grid.climWC_africa[[i]] <- ecospat.grid.clim.dyn( glob = scores.climWC, glob1 = scores.climWC,
+                                                sp= scores.africa_climWC[[i]], R=100, th.sp=0 )
+grid.climCH_africa[[i]] <- ecospat.grid.clim.dyn( glob = scores.climCH, glob1 = scores.climCH,
+                                                sp= scores.africa_climCH[[i]], R=100, th.sp=0 )}
+for(i in 1:5){
+grid.fire_tropics[[i]] <- ecospat.grid.clim.dyn( glob = scores.fire, glob1 = scores.fire, 
+                                                sp= scores.tropics_fire[[i]], R=100, th.sp=0 )
+grid.NDVI_tropics[[i]] <- ecospat.grid.clim.dyn( glob = scores.NDVI, glob1 = scores.NDVI, 
+                                                sp= scores.tropics_NDVI[[i]], R=100, th.sp=0 )
+grid.climWC_tropics[[i]] <- ecospat.grid.clim.dyn( glob = scores.climWC, glob1 = scores.climWC,
+                                                  sp= scores.tropics_climWC[[i]], R=100, th.sp=0 )
+grid.climCH_tropics[[i]] <- ecospat.grid.clim.dyn( glob = scores.climCH, glob1 = scores.climCH,
+                                                  sp= scores.tropics_climCH[[i]], R=100, th.sp=0 )}
+#
+#
+#
+#grids for non-burned area
+grid.mada_noburnclimCH <- ecospat.grid.clim.dyn( glob = scores.noburn.climCH, glob1 = scores.noburn.climCH, 
+                                                  sp= scores.mada_noburnclimCH, R=100, th.sp=0 )
+grid.mada_noburnclimWC <- ecospat.grid.clim.dyn( glob = scores.noburn.climWC, glob1 = scores.noburn.climWC, 
+                                                  sp= scores.mada_noburnclimWC, R=100, th.sp=0 )
+grid.mada_noburnNDVI <- ecospat.grid.clim.dyn( glob = scores.noburn.NDVI, glob1 = scores.noburn.NDVI, 
+                                                  sp= scores.mada_noburnNDVI, R=100, th.sp=0 )
+#
+grid.africa_noburnclimCH <- ecospat.grid.clim.dyn( glob = scores.noburn.climCH, glob1 = scores.noburn.climCH, 
+                                                  sp= scores.africa_noburnclimCH, R=100, th.sp=0 )
+grid.africa_noburnclimWC <- ecospat.grid.clim.dyn( glob = scores.noburn.climWC, glob1 = scores.noburn.climWC, 
+                                                  sp= scores.africa_noburnclimWC, R=100, th.sp=0 )
+grid.africa_noburnNDVI <- ecospat.grid.clim.dyn( glob = scores.noburn.NDVI, glob1 = scores.noburn.NDVI, 
+                                                  sp= scores.africa_noburnNDVI, R=100, th.sp=0 )
+#
+grid.tropics_noburnclimCH <- ecospat.grid.clim.dyn( glob = scores.noburn.climCH, glob1 = scores.noburn.climCH, 
+                                                  sp= scores.tropics_noburnclimCH, R=100, th.sp=0 )
+grid.tropics_noburnclimWC <- ecospat.grid.clim.dyn( glob = scores.noburn.climWC, glob1 = scores.noburn.climWC, 
+                                                  sp= scores.tropics_noburnclimWC, R=100, th.sp=0 )
+grid.tropics_noburnNDVI <- ecospat.grid.clim.dyn( glob = scores.noburn.NDVI, glob1 = scores.noburn.NDVI, 
+                                                  sp= scores.tropics_noburnNDVI, R=100, th.sp=0 )
+#
+#
+#
+#mada v. non-african tropics (overlap grids between regions (subset > 24 MESS))
+D.den_fire_F=list()
+D.den_NDVI_F=list()
+D.den_climWC_F=list()
+D.den_climCH_F=list()
+for(i in 1:5){ D.den_fire_F[[i]]<-ecospat.niche.overlap( grid.fire_mada[[i]], grid.fire_tropics[[i]],  cor=F ) }
+for(i in 1:5){ D.den_NDVI_F[[i]]<-ecospat.niche.overlap( grid.NDVI_mada[[i]], grid.NDVI_tropics[[i]],  cor=F ) }
+for(i in 1:5){ D.den_climWC_F[[i]]<-ecospat.niche.overlap( grid.climWC_mada[[i]], grid.climWC_tropics[[i]],  cor=F ) }
+for(i in 1:5){ D.den_climCH_F[[i]]<-ecospat.niche.overlap( grid.climCH_mada[[i]], grid.climCH_tropics[[i]],  cor=F ) }
+#no burn results
+for(i in 6){ D.den_NDVI_F[[i]]<-ecospat.niche.overlap( grid.mada_noburnNDVI, grid.tropics_noburnNDVI,  cor=F ) }
+for(i in 6){ D.den_climWC_F[[i]]<-ecospat.niche.overlap( grid.mada_noburnclimWC, grid.tropics_noburnclimWC,  cor=F ) }
+for(i in 6){ D.den_climCH_F[[i]]<-ecospat.niche.overlap( grid.mada_noburnclimCH, grid.tropics_noburnclimCH,  cor=F ) }
+#
+#mada v. cont. africa (overlap grids between regions (subset > 24 MESS))
+africa_D.den_fire_F=list()
+africa_D.den_NDVI_F=list()
+africa_D.den_climWC_F=list()
+africa_D.den_climCH_F=list()
+for(i in 1:5){ africa_D.den_fire_F[[i]]<-ecospat.niche.overlap( grid.fire_mada[[i]], grid.fire_africa[[i]],  cor=F ) }
+for(i in 1:5){ africa_D.den_NDVI_F[[i]]<-ecospat.niche.overlap( grid.NDVI_mada[[i]], grid.NDVI_africa[[i]],  cor=F ) }
+for(i in 1:5){ africa_D.den_climWC_F[[i]]<-ecospat.niche.overlap( grid.climWC_mada[[i]], grid.climWC_africa[[i]],  cor=F ) }
+for(i in 1:5){ africa_D.den_climCH_F[[i]]<-ecospat.niche.overlap( grid.climCH_mada[[i]], grid.climCH_africa[[i]],  cor=F ) }
+for(i in 6){ africa_D.den_NDVI_F[[i]]<-ecospat.niche.overlap( grid.mada_noburnNDVI, grid.africa_noburnNDVI,  cor=F ) }
+for(i in 6){ africa_D.den_climWC_F[[i]]<-ecospat.niche.overlap( grid.mada_noburnclimWC, grid.africa_noburnclimWC,  cor=F ) }
+for(i in 6){ africa_D.den_climCH_F[[i]]<-ecospat.niche.overlap( grid.mada_noburnclimCH, grid.africa_noburnclimCH,  cor=F ) }
+#
+tropicsvafrica_D.den_fire_F=list()
+tropicsvafrica_D.den_NDVI_F=list()
+tropicsvafrica_D.den_climWC_F=list()
+tropicsvafrica_D.den_climCH_F=list()
+tropicsvafrica_D.den2_fire_F=list()
+for(i in 1:5){ tropicsvafrica_D.den_fire_F[[i]]<-ecospat.niche.overlap( grid.fire_tropics[[i]], grid.fire_africa[[i]],  cor=F ) }
+for(i in 1:5){ tropicsvafrica_D.den_NDVI_F[[i]]<-ecospat.niche.overlap( grid.NDVI_tropics[[i]], grid.NDVI_africa[[i]],  cor=F ) }
+for(i in 1:5){ tropicsvafrica_D.den_climWC_F[[i]]<-ecospat.niche.overlap( grid.climWC_tropics[[i]], grid.climWC_africa[[i]],  cor=F ) }
+for(i in 1:5){ tropicsvafrica_D.den_climCH_F[[i]]<-ecospat.niche.overlap( grid.climCH_tropics[[i]], grid.climCH_africa[[i]],  cor=F ) }
+for(i in 6){ tropicsvafrica_D.den_NDVI_F[[i]]<-ecospat.niche.overlap( grid.tropics_noburnNDVI, grid.africa_noburnNDVI,  cor=F ) }
+for(i in 6){ tropicsvafrica_D.den_climWC_F[[i]]<-ecospat.niche.overlap( grid.tropics_noburnclimWC, grid.africa_noburnclimWC,  cor=F ) }
+for(i in 6){ tropicsvafrica_D.den_climCH_F[[i]]<-ecospat.niche.overlap( grid.tropics_noburnclimCH, grid.africa_noburnclimCH,  cor=F ) }
+################################################ 
+#
+#
+#RESULTS TABLE for figure 4a (left, center)
+results = data.frame(matrix(NA,nrow=4,ncol=6))
+tropicsvafrica_results = data.frame(matrix(NA,nrow=4,ncol=6))
+africa_results = data.frame(matrix(NA,nrow=4,ncol=6))
+rownames(results) = c("D.i_fire_F","D.i_NDVI_F","D.i_climWC_F","D.i_climCH_F")
+rownames(africa_results) = c("D.i_fire_F","D.i_NDVI_F","D.i_climWC_F","D.i_climCH_F")
+rownames(tropicsvafrica_results) = c("D.i_fire_F","D.i_NDVI_F","D.i_climWC_F","D.i_climCH_F")
+for(i in 1:5){ results["D.i_fire_F",][,i] = D.den_fire_F[[i]][2] }
+for(i in 1:6){ results["D.i_NDVI_F",][,i] = D.den_NDVI_F[[i]][2] }
+for(i in 1:6){ results["D.i_climWC_F",][,i] = D.den_climWC_F[[i]][2] }
+for(i in 1:6){ results["D.i_climCH_F",][,i] = D.den_climCH_F[[i]][2] }
+#
+for(i in 1:5){ africa_results["D.i_fire_F",][,i] = africa_D.den_fire_F[[i]][2] }
+for(i in 1:6){ africa_results["D.i_NDVI_F",][,i] = africa_D.den_NDVI_F[[i]][2] }
+for(i in 1:6){ africa_results["D.i_climWC_F",][,i] = africa_D.den_climWC_F[[i]][2] }
+for(i in 1:6){ africa_results["D.i_climCH_F",][,i] = africa_D.den_climCH_F[[i]][2] }
+#
+for(i in 1:5){ tropicsvafrica_results["D.i_fire_F",][,i] = tropicsvafrica_D.den_fire_F[[i]][2] }
+for(i in 1:6){ tropicsvafrica_results["D.i_NDVI_F",][,i] = tropicsvafrica_D.den_NDVI_F[[i]][2] }
+for(i in 1:6){ tropicsvafrica_results["D.i_climWC_F",][,i] = tropicsvafrica_D.den_climWC_F[[i]][2] }
+for(i in 1:6){ tropicsvafrica_results["D.i_climCH_F",][,i] = tropicsvafrica_D.den_climCH_F[[i]][2] }
+################################
+results<-data.frame(t(results))
+tropicsvafrica_results<-data.frame(t(tropicsvafrica_results))
+africa_results<-data.frame(t(africa_results))
+
+```
+
+
+
+
+```{r}
+#TABLE 1 (tree loss, pop den)
+#
+#
+#DEFINE dense-stable v. sparse-variable veg groups per region
+low_mada=list()
+for(i in 1:6){low_mada[[i]] = mada_fire_clusts[[i]][ mada_fire_clusts[[i]]$mean_yrly_NDVI < 0.8 & mada_fire_clusts[[i]]$cv_mnthly_NDVI > 0.08,]}
+high_mada=list()
+for(i in 1:6){high_mada[[i]] = mada_fire_clusts[[i]][ mada_fire_clusts[[i]]$mean_yrly_NDVI > 0.8 & mada_fire_clusts[[i]]$cv_mnthly_NDVI < 0.08,]}
+low_africa=list()
+for(i in 1:6){low_africa[[i]] = africa_fire_clusts[[i]][ africa_fire_clusts[[i]]$mean_yrly_NDVI < 0.8 & africa_fire_clusts[[i]]$cv_mnthly_NDVI > 0.08,]}
+high_africa=list()
+for(i in 1:6){high_africa[[i]] = africa_fire_clusts[[i]][ africa_fire_clusts[[i]]$mean_yrly_NDVI > 0.8 & africa_fire_clusts[[i]]$cv_mnthly_NDVI < 0.08,]}
+low_tropics=list()
+for(i in 1:6){low_tropics[[i]] = tropics_fire_clusts[[i]][ tropics_fire_clusts[[i]]$mean_yrly_NDVI < 0.8 & tropics_fire_clusts[[i]]$cv_mnthly_NDVI > 0.08,]}
+high_tropics=list()
+for(i in 1:6){high_tropics[[i]] = tropics_fire_clusts[[i]][ tropics_fire_clusts[[i]]$mean_yrly_NDVI > 0.8 & tropics_fire_clusts[[i]]$cv_mnthly_NDVI < 0.08,]}
+#
+#
+nomada=list()
+low_nomada=list()
+high_nomada=list()
+for(i in 1:6){nomada[[i]] = rbind(tropics_fire_clusts[[i]],africa_fire_clusts[[i]],mada_fire_clusts[[i]])}
+for(i in 1:6){low_nomada[[i]] = rbind(low_tropics[[i]],low_africa[[i]],low_mada[[i]])}
+for(i in 1:6){high_nomada[[i]] = rbind(high_tropics[[i]],high_africa[[i]],high_mada[[i]])}
+#
+sum_mada=vector()
+sum_africa=vector()
+sum_tropics=vector()
+sum_nomada=vector()
+for(i in 1:6){ sum_mada[i] = sum(mada_fire_clusts[[i]][,"Hansen_loss_tropics"])/NROW(mada_fire_clusts[[i]]) }
+for(i in 1:6){ sum_africa[i] = sum(africa_fire_clusts[[i]][,"Hansen_loss_tropics"])/NROW(africa_fire_clusts[[i]]) }
+for(i in 1:6){ sum_tropics[i] = sum(tropics_fire_clusts[[i]][,"Hansen_loss_tropics"])/NROW(tropics_fire_clusts[[i]]) }
+for(i in 1:6){ sum_nomada[i] = sum(nomada[[i]][,"Hansen_loss_tropics"])/NROW(nomada[[i]]) }
+mean(sum_mada)
+mean(sum_nomada)
+#
+sum_low_mada=vector()
+sum_low_africa=vector()
+sum_low_tropics=vector()
+sum_low_nomada=vector()
+for(i in 1:6){ sum_low_mada[i] = sum(low_mada[[i]][,"Hansen_loss_tropics"])/NROW(low_mada[[i]]) }
+sum_low_mada[7]<- (sum(low_mada[[1]][,"Hansen_loss_tropics"]) + sum(low_mada[[2]][,"Hansen_loss_tropics"])) / 
+                    ( NROW(low_mada[[1]]) + NROW(low_mada[[2]]) )
+for(i in 1:6){ sum_low_africa[i] = sum(low_africa[[i]][,"Hansen_loss_tropics"])/NROW(low_africa[[i]]) }
+sum_low_africa[7]<- (sum(low_africa[[1]][,"Hansen_loss_tropics"]) + sum(low_africa[[2]][,"Hansen_loss_tropics"])) / 
+                    ( NROW(low_africa[[1]]) + NROW(low_africa[[2]]) )
+for(i in 1:6){ sum_low_tropics[i] = sum(low_tropics[[i]][,"Hansen_loss_tropics"])/NROW(low_tropics[[i]]) }
+sum_low_tropics[7]<- (sum(low_tropics[[1]][,"Hansen_loss_tropics"]) + sum(low_tropics[[2]][,"Hansen_loss_tropics"])) / 
+                    ( NROW(low_tropics[[1]]) + NROW(low_tropics[[2]]) )
+for(i in 1:6){ sum_low_nomada[i] = sum(low_nomada[[i]][,"Hansen_loss_tropics"])/NROW(low_nomada[[i]]) }
+sum_low_nomada[7]<- (sum(low_nomada[[1]][,"Hansen_loss_tropics"]) + sum(low_nomada[[2]][,"Hansen_loss_tropics"])) / 
+                    ( NROW(low_nomada[[1]]) + NROW(low_nomada[[2]]) )
+#
+#
+#
+sum_high_mada=vector()
+sum_high_africa=vector()
+sum_high_tropics=vector()
+sum_high_nomada=vector()
+for(i in 1:6){ sum_high_mada[i] = sum(high_mada[[i]][,"Hansen_loss_tropics"])/NROW(high_mada[[i]]) }
+sum_high_mada[7]<- (sum(high_mada[[1]][,"Hansen_loss_tropics"]) + sum(high_mada[[2]][,"Hansen_loss_tropics"])) / 
+                    ( NROW(high_mada[[1]]) + NROW(high_mada[[2]]) )
+for(i in 1:6){ sum_high_africa[i] = sum(high_africa[[i]][,"Hansen_loss_tropics"])/NROW(high_africa[[i]]) }
+sum_high_africa[7]<- (sum(high_africa[[1]][,"Hansen_loss_tropics"]) + sum(high_africa[[2]][,"Hansen_loss_tropics"])) / 
+                    ( NROW(high_africa[[1]]) + NROW(high_africa[[2]]) )
+for(i in 1:6){ sum_high_tropics[i] = sum(high_tropics[[i]][,"Hansen_loss_tropics"])/NROW(high_tropics[[i]]) }
+sum_high_tropics[7]<- (sum(high_tropics[[1]][,"Hansen_loss_tropics"]) + sum(high_tropics[[2]][,"Hansen_loss_tropics"])) / 
+                    ( NROW(high_tropics[[1]]) + NROW(high_tropics[[2]]) )
+for(i in 1:6){ sum_high_nomada[i] = sum(high_nomada[[i]][,"Hansen_loss_tropics"])/NROW(high_nomada[[i]]) }
+sum_high_nomada[7]<- (sum(high_nomada[[1]][,"Hansen_loss_tropics"]) + sum(high_nomada[[2]][,"Hansen_loss_tropics"])) / 
+                    ( NROW(high_nomada[[1]]) + NROW(high_nomada[[2]]) )
+#
+#
+#
+#
+#
+#CALCULATE % pixels w/ tree loss for all fire regimes
+testyo_nomada = nomada
+testyo_nomada[[6]]<-NULL
+testyo_mada = mada_fire_clusts
+testyo_mada[[6]]<-NULL
+testyo_africa = africa_fire_clusts
+testyo_africa[[6]]<-NULL
+testyo_tropics = tropics_fire_clusts
+testyo_tropics[[6]]<-NULL
+nomada_all <- do.call(rbind,lapply(testyo_nomada, data.frame))
+mada_all <- do.call(rbind,lapply(testyo_mada, data.frame))
+tropics_all <- do.call(rbind,lapply(testyo_tropics, data.frame))
+africa_all <- do.call(rbind,lapply(testyo_africa, data.frame))
+testyo_nomada = sum(nomada_all[,"Hansen_loss_tropics"])/NROW(nomada_all)
+testyo_mada = sum(mada_all[,"Hansen_loss_tropics"])/NROW(mada_all)
+testyo_africa = sum(africa_all[,"Hansen_loss_tropics"])/NROW(africa_all)
+testyo_tropics = sum(tropics_all[,"Hansen_loss_tropics"])/NROW(tropics_all)
+allFireregimes = c(testyo_mada,testyo_africa,testyo_tropics,testyo_nomada)
+round(allFireregimes,digits=4)
+round(allFireregimes[1] / allFireregimes[4],digits=4)
+#
+allCombined <- allFireregimes
+NROW(africa_all)+NROW(africa_fire_clusts[[6]])
+NROW(CV_all_africa)
+#########################################################################################################
+#Table 1(a-b)
+d1 = data.frame(sum_mada, sum_africa,sum_tropics,sum_nomada)
+d1[7,]<-allFireregimes
+colnames(d1)<-c("mada","africa","tropics","nomada")
+rownames(d1)<-c("regime1","regime2","regime3","regime4","regime5","no-fire","fireRegimesOnly")
+#
+d2 = data.frame( sum_high_mada[c(1,2,7,6)], sum_high_africa[c(1,2,7,6)], sum_high_tropics[c(1,2,7,6)], sum_high_nomada[c(1,2,7,6)] )
+colnames(d2)<-c("mada","africa","tropics","nomada")
+rownames(d2)<-c("regime1-high","regime2-high","regime1&2","no-fire-high")
+d3 = data.frame(sum_low_mada[c(1,2,7,6)], sum_low_africa[c(1,2,7,6)],sum_low_tropics[c(1,2,7,6)],sum_low_nomada[c(1,2,7,6)])
+colnames(d3)<-c("mada","africa","tropics","nomada")
+rownames(d3)<-c("regime1-low","regime2-low","regime1&2","no-fire-low")
+dfin_treeloss = rbind(d1,d2,d3)
+dfin_treeloss
+dfin_treeloss$difference = dfin_treeloss$mada / dfin_treeloss$nomada
+dfin_treeloss$difference2 = dfin_treeloss$mada - dfin_treeloss$nomada
+#
+dfin_treeloss[1,][,"mada"] / dfin_treeloss[1,][,"nomada"]
+dfin_treeloss[1,][,"nomada"]
+#
+mean(dfin_treeloss$difference[1:5])
+dfin_treelossround = round(dfin_treeloss,digits = 4)
+#
+#
+#
+#########################################################################################################
+#TABLE 1 POPDEN
+for(i in 1:6){popden_mada[[i]]<-popden_mada[[i]][ !is.na(popden_mada[[i]]$gpw_v4_population_density_rev11_2020_30_sec),]}
+for(i in 1:6){popden_africa[[i]]<-popden_africa[[i]][ !is.na(popden_africa[[i]]$gpw_v4_population_density_rev11_2020_30_sec),]}
+for(i in 1:6){popden_tropics[[i]]<-popden_tropics[[i]][ !is.na(popden_tropics[[i]]$gpw_v4_population_density_rev11_2020_30_sec),]}
+#
+for(i in 1:6){popden_mada_low[[i]]<-popden_mada_low[[i]][ !is.na(popden_mada_low[[i]]$gpw_v4_population_density_rev11_2020_30_sec),]}
+for(i in 1:6){popden_africa_low[[i]]<-popden_africa_low[[i]][ !is.na(popden_africa_low[[i]]$gpw_v4_population_density_rev11_2020_30_sec),]}
+for(i in 1:6){popden_tropics_low[[i]]<-popden_tropics_low[[i]][ !is.na(popden_tropics_low[[i]]$gpw_v4_population_density_rev11_2020_30_sec),]}
+#
+for(i in 1:6){popden_mada_high[[i]]<-popden_mada_high[[i]][ !is.na(popden_mada_high[[i]]$gpw_v4_population_density_rev11_2020_30_sec),]}
+for(i in 1:6){popden_africa_high[[i]]<-popden_africa_high[[i]][ !is.na(popden_africa_high[[i]]$gpw_v4_population_density_rev11_2020_30_sec),]}
+for(i in 1:6){popden_tropics_high[[i]]<-popden_tropics_high[[i]][ !is.na(popden_tropics_high[[i]]$gpw_v4_population_density_rev11_2020_30_sec),]}
+#
+popden_nomada = list()
+popden_nomada_low = list()
+popden_nomada_high = list()
+for(i in 1:6){ popden_nomada[[i]]<-rbind(popden_africa[[i]], popden_tropics[[i]], popden_mada[[i]]) }
+for(i in 1:6){ popden_nomada_low[[i]]<-rbind(popden_africa_low[[i]], popden_tropics_low[[i]], popden_mada_low[[i]]) }
+for(i in 1:6){ popden_nomada_high[[i]]<-rbind(popden_africa_high[[i]], popden_tropics_high[[i]], popden_mada_high[[i]]) }
+#
+meanPop_mada=vector()
+meanPop_africa=vector()
+meanPop_tropics=vector()
+meanPop_nomada=vector()
+for(i in 1:6){ meanPop_mada[i] = mean(popden_mada[[i]][,"gpw_v4_population_density_rev11_2020_30_sec"]) }
+for(i in 1:6){ meanPop_africa[i] = mean(popden_africa[[i]][,"gpw_v4_population_density_rev11_2020_30_sec"]) }
+for(i in 1:6){ meanPop_tropics[i] = mean(popden_tropics[[i]][,"gpw_v4_population_density_rev11_2020_30_sec"]) }
+for(i in 1:6){ meanPop_nomada[i] = mean(popden_nomada[[i]][,"gpw_v4_population_density_rev11_2020_30_sec"]) }
+# NROW(popden_mada[[1]])
+# NROW(popden_nomada[[1]])
+# NROW(popden_africa[[1]])+NROW(popden_tropics[[1]])
+meanPop_africa
+meanPop_tropics
+meanPop_nomada
+#
+meanPop_low_mada=vector()
+meanPop_low_africa=vector()
+meanPop_low_tropics=vector()
+meanPop_low_nomada=vector()
+for(i in 1:6){ meanPop_low_mada[i] = mean(popden_mada_low[[i]][,"gpw_v4_population_density_rev11_2020_30_sec"]) }
+together = rbind( popden_mada_low[[1]],popden_mada_low[[2]] )
+meanPop_low_mada[7] <- mean(together[,"gpw_v4_population_density_rev11_2020_30_sec"])
+for(i in 1:6){ meanPop_low_africa[i] = mean(popden_africa_low[[i]][,"gpw_v4_population_density_rev11_2020_30_sec"]) }
+together = rbind( popden_africa_low[[1]],popden_africa_low[[2]] )
+meanPop_low_africa[7] <- mean(together[,"gpw_v4_population_density_rev11_2020_30_sec"])
+for(i in 1:6){ meanPop_low_tropics[i] = mean(popden_tropics_low[[i]][,"gpw_v4_population_density_rev11_2020_30_sec"]) }
+together = rbind( popden_tropics_low[[1]],popden_tropics_low[[2]] )
+meanPop_low_tropics[7] <- mean(together[,"gpw_v4_population_density_rev11_2020_30_sec"])
+for(i in 1:6){ meanPop_low_nomada[i] = mean(popden_nomada_low[[i]][,"gpw_v4_population_density_rev11_2020_30_sec"]) }
+together = rbind( popden_nomada_low[[1]],popden_nomada_low[[2]] )
+meanPop_low_nomada[7] <- mean(together[,"gpw_v4_population_density_rev11_2020_30_sec"])
+#
+meanPop_high_mada=vector()
+meanPop_high_africa=vector()
+meanPop_high_tropics=vector()
+meanPop_high_nomada=vector()
+for(i in 1:6){ meanPop_high_mada[i] = mean(popden_mada_high[[i]][,"gpw_v4_population_density_rev11_2020_30_sec"]) }
+together = rbind( popden_mada_high[[1]],popden_mada_high[[2]] )
+meanPop_high_mada[7] <- mean(together[,"gpw_v4_population_density_rev11_2020_30_sec"])
+for(i in 1:6){ meanPop_high_africa[i] = mean(popden_africa_high[[i]][,"gpw_v4_population_density_rev11_2020_30_sec"]) }
+together = rbind( popden_africa_high[[1]],popden_africa_high[[2]] )
+meanPop_high_africa[7] <- mean(together[,"gpw_v4_population_density_rev11_2020_30_sec"])
+for(i in 1:6){ meanPop_high_tropics[i] = mean(popden_tropics_high[[i]][,"gpw_v4_population_density_rev11_2020_30_sec"]) }
+together = rbind( popden_tropics_high[[1]],popden_tropics_high[[2]] )
+meanPop_high_tropics[7] <- mean(together[,"gpw_v4_population_density_rev11_2020_30_sec"])
+for(i in 1:6){ meanPop_high_nomada[i] = mean(popden_nomada_high[[i]][,"gpw_v4_population_density_rev11_2020_30_sec"]) }
+together = rbind( popden_nomada_high[[1]],popden_nomada_high[[2]] )
+meanPop_high_nomada[7] <- mean(together[,"gpw_v4_population_density_rev11_2020_30_sec"])
+##########################
+#
+testyo_mada = popden_mada
+testyo_mada[[6]]<-NULL
+testyo_africa = popden_africa
+testyo_africa[[6]]<-NULL
+testyo_tropics = popden_tropics 
+testyo_tropics[[6]]<-NULL
+#
+mada_all <- do.call(rbind,lapply(testyo_mada, data.frame))
+tropics_all <- do.call(rbind,lapply(testyo_tropics, data.frame))
+africa_all <- do.call(rbind,lapply(testyo_africa, data.frame))
+#
+nomada_all <- rbind(mada_all,tropics_all,africa_all)
+#
+mada_all<-mada_all[!is.na(mada_all$gpw_v4_population_density_rev11_2020_30_sec),]
+testyo_mada = mean(mada_all$gpw_v4_population_density_rev11_2020_30_sec)
+#
+africa_all<-africa_all[!is.na(africa_all$gpw_v4_population_density_rev11_2020_30_sec),]
+testyo_africa = mean(africa_all$gpw_v4_population_density_rev11_2020_30_sec)
+#
+tropics_all<-tropics_all[!is.na(tropics_all$gpw_v4_population_density_rev11_2020_30_sec),]
+testyo_tropics = mean(tropics_all$gpw_v4_population_density_rev11_2020_30_sec)
+#
+nomada_all<-nomada_all[!is.na(nomada_all$gpw_v4_population_density_rev11_2020_30_sec),]
+testyo_nomada = mean(nomada_all$gpw_v4_population_density_rev11_2020_30_sec)
+#
+allFireregimes = c(testyo_mada,testyo_africa,testyo_tropics,testyo_nomada)
+allFireregimes
+round(allFireregimes,digits=2)
+round(allFireregimes[1] / allFireregimes[4],digits=2)
+#
+#popDen in no-fire forest v. fire forest (Mada)
+high_mada_duo = rbind(popden_mada_high[[1]],popden_mada_high[[2]])
+high_africa_duo = rbind(popden_africa_high[[1]],popden_africa_high[[2]])
+high_nomada_duo = rbind(popden_nomada_high[[1]],popden_nomada_high[[2]])
+#
+#forested no-fire mada popDen / forested Mada w/fire
+mean(popden_mada_high[[6]]$gpw_v4_population_density_rev11_2020_30_sec) / mean(high_mada_duo$gpw_v4_population_density_rev11_2020_30_sec)
+#forest mada w/ fire v. continental AFrica
+mean(high_mada_duo$gpw_v4_population_density_rev11_2020_30_sec) / mean(high_africa_duo$gpw_v4_population_density_rev11_2020_30_sec)
+#forest landscapes w/o fire mada v. africa
+mean(high_mada_duo$gpw_v4_population_density_rev11_2020_30_sec) / mean(high_africa_duo$gpw_v4_population_density_rev11_2020_30_sec)
+##########################################################################
+#Table 1 (c-d)
+d1 = data.frame(meanPop_mada, meanPop_africa, meanPop_tropics, meanPop_nomada)
+d1[7,] <- allFireregimes
+colnames(d1)<-c("mada","africa","tropics","nomada")
+rownames(d1)<-c("regime1","regime2","regime3","regime4","regime5","no-fire","AllFireRegimes")
+#
+d2 = data.frame(meanPop_high_mada[c(1,2,7,6)], meanPop_high_africa[c(1,2,7,6)],meanPop_high_tropics[c(1,2,7,6)],meanPop_high_nomada[c(1,2,7,6)])
+colnames(d2)<-c("mada","africa","tropics","nomada")
+rownames(d2)<-c("regime1-high","regime2-high","regime1&2","no-fire-high")
+#
+d3 = data.frame(meanPop_low_mada[c(1,2,7,6)], meanPop_low_africa[c(1,2,7,6)],meanPop_low_tropics[c(1,2,7,6)],meanPop_low_nomada[c(1,2,7,6)])
+colnames(d3)<-c("mada","africa","tropics","nomada")
+rownames(d3)<-c("regime1-low","regime2-low","regime1&1","no-fire-low")
+dfin = rbind(d1,d2,d3)
+dfin
+dfin$difference = dfin$mada / dfin$nomada
+dfinround = round(dfin,digits = 2)
+```
+
+
+
+
+```{r}
+#Anthropogenic fire trends analysis
+
+#test3 == load time-series BA and TRMM data 
+#
+#
+#SELECT, log-transform, rescale before lm of trends 
+test4 = test3[,1:77]
+test5 = test4
+absmin=vector()
+for(i in 1:NCOL(test4)){ absmin[i] = abs( min(as.numeric(as.character(test4[,i])))) }
+for(i in 3:NCOL(test5)){ test5[,i] <- log10( test5[,i]+absmin[i]+1 ) }
+#
+BAmax = max(test5[,3:17])
+TRMM2max = max(test5[,18:32])
+TRMM6max = max(test5[,48:62])
+NDVImax = max(test5[,63:77])
+#
+test6 = test5
+for(i in 3:17){ test6[,i] <- test5[,i]/BAmax }
+for(i in 18:32){ test6[,i] <- test5[,i]/TRMM2max}
+for(i in 48:62){ test6[,i] <- test5[,i]/TRMM6max}
+for(i in 63:77){ test6[,i] <- test5[,i]/NDVImax}
+maxes=vector()
+for(i in 3:NCOL(test6)){ maxes[i] = max(test6[,i]) }
+maxes<-maxes[!is.na(maxes)]
+max(maxes) == 1
+testy<-rasterFromXYZ(test6[,c(1:3)])
+####################################################
+
+
+#(1) is there a time trend in burned area?
+var_all = list()
+#
+#selection column range of relevant time series (burned area)
+c1=3
+c2=17
+#
+pvalcol = "pvalue_BA_timeonly"
+tvalcol = "tvalue_BA_timeonly"
+type = "BA_timeonly"
+test6[,pvalcol]<-"hello"
+test6[,tvalcol]<-"hello"
+#
+#(originally broken into chunks for disk space purposes)
+#identify significant burned area time sequences (extract p-value, t-values)
+##############################
+for(i in 1:(NROW(test6))){   var_all[[i]] = lm( as.numeric(test6[i,][,c1:c2]) ~ seq(2005,2019,by=1)) }
+for(i in 1:(NROW(test6))){   test6[i,][,pvalcol] = summary(var_all[[i]])$coefficients[,4][2]}
+for(i in 1:(NROW(test6))){   test6[i,][,tvalcol] = summary(var_all[[i]])$coefficients[,3][2]}
+var_all = list()
+################################################################
+###############################################################
+
+
+#(2) is burned area explained by climate after time trend? (TRMM 2-year: fuel-limited)
+var_all = list()
+#
+c1=3
+c2=17
+#driver = 
+#
+pvalcol1 = "pvalue_BA_time_"
+tvalcol1 = "fvalue_BA_time_"
+pvalcol2 = "pvalue_BA_timeClim2"
+tvalcol2 = "fvalue_BA_timeClim2"
+type = "BA_timeClim2"
+#
+test6[,pvalcol1]<-"hello"
+test6[,tvalcol1]<-"hello"
+test6[,pvalcol2]<-"hello"
+test6[,tvalcol2]<-"hello"
+##############################
+for(i in 1:(NROW(test6))){                   var_all[[i]] = lm( as.numeric(test6[i,][,c1:c2]) ~ seq(2005,2019,by=1)+as.numeric(test6[i,][,18:32] )) }
+for(i in 1:(NROW(test6))){                   test6[i,][,pvalcol1] = anova(var_all[[i]])[,5][1]}
+for(i in 1:(NROW(test6))){                   test6[i,][,tvalcol1] = anova(var_all[[i]])[,4][1]}
+for(i in 1:(NROW(test6))){                   test6[i,][,pvalcol2] = anova(var_all[[i]])[,5][2]}
+for(i in 1:(NROW(test6))){                   test6[i,][,tvalcol2] = anova(var_all[[i]])[,4][2]}
+var_all = list()
+###############################################################
+###############################################################
+
+
+#(3) is burned area explained by climate after time trend?  (TRMM 6-month: drought-limited)
+var_all = list()
+#
+c1=3
+c2=17
+#driver = 
+#
+pvalcol1 = "pvalue_BA_time__"
+tvalcol1 = "fvalue_BA_time__"
+pvalcol2 = "pvalue_BA_timeClim6"
+tvalcol2 = "fvalue_BA_timeClim6"
+type = "BA_timeClim6"
+#
+test6[,pvalcol1]<-"hello"
+test6[,tvalcol1]<-"hello"
+test6[,pvalcol2]<-"hello"
+test6[,tvalcol2]<-"hello"
+##############################
+for(i in 1:(NROW(test6))){                   var_all[[i]] = lm( as.numeric(test6[i,][,c1:c2]) ~ seq(2005,2019,by=1)+as.numeric(test6[i,][,48:62] )) }
+for(i in 1:(NROW(test6))){                   test6[i,][,pvalcol1] = anova(var_all[[i]])[,5][1]}
+for(i in 1:(NROW(test6))){                   test6[i,][,tvalcol1] = anova(var_all[[i]])[,4][1]}
+for(i in 1:(NROW(test6))){                   test6[i,][,pvalcol2] = anova(var_all[[i]])[,5][2]}
+for(i in 1:(NROW(test6))){                   test6[i,][,tvalcol2] = anova(var_all[[i]])[,4][2]}
+var_all = list()
+################################################################
+###############################################################
+#
+#
+#COLLATE TRENDS w/ TIME TREND BUT NOT EXPLAINED BY PRECIP
+new<-data.frame(test6[,c("x","y", "pvalue_BA_time_","fvalue_BA_time_","pvalue_BA_timeClim2","fvalue_BA_timeClim2",
+                  "pvalue_BA_time__","fvalue_BA_time__","pvalue_BA_timeClim6","fvalue_BA_timeClim6")])
+
+new[new==NaN]<-0
+new<-new[new$fvalue_BA_time_!="hello",]
+
+#select sig. BA time trends & non-sig climate explanations after trend (6-month, 24-month)
+anthroBAtrends = new[new$pvalue_BA_timeonly < 0.05 & new$pvalue_BA_time_ < 0.05 & new$pvalue_BA_time__ < 0.05 & new$pvalue_BA_timeClim2 >= 0.05 & new$pvalue_BA_timeClim6 >= 0.05,]
+anthroBAtrends0 = new[new$tvalue_BA_timeonly==0,]
+anthroBAtrends<-merge(anthroBAtrends,anthroBAtrends0,by.all=c("x","y"),all=TRUE)
+
+```
+
